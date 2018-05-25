@@ -225,25 +225,30 @@ app.route('/getFeeds')
           }
         })
         .then(followingUserList => {
-            var followingUserIDList = followingUserList.map(function (obj) {
-                return obj['followed_id'];
-              });
-            Post.findAll({
-                where: {
-                    user_id:{
-                        [Op.or]: followingUserIDList
-                      }
-              }
-            }).then(postList =>{
-                postList = postList.filter((post) => {
-                    return  ((new Date() - post.dataValues.created_at) / 36e5 <= 24);
+            if(followingUserList.length != 0){
+                var followingUserIDList = followingUserList.map(function (obj) {
+                    return obj['followed_id'];
+                  });
+                Post.findAll({
+                    where: {
+                        user_id:{
+                            [Op.or]: followingUserIDList
+                          }
+                  }
+                }).then(postList =>{
+                    postList = postList.filter((post) => {
+                        return  ((new Date() - post.dataValues.created_at) / 36e5 <= 24);
+                    });
+                    postList.sort((a,b) => {
+                        return b.dataValues.content.length - a.dataValues.content.length;
+                    });
+                    res.json(postList);
+    
                 });
-                postList.sort((a,b) => {
-                    return b.dataValues.content.length - a.dataValues.content.length;
-                });
-                res.json(postList);
-
-            });
+            }
+            else {
+                res.send('Youare not following anyone. Follow someone to see the feeds.');
+            }
         })
         .catch(error => {
             res.send('Error Finding Following List');
